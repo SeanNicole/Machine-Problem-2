@@ -27,84 +27,41 @@ public class ImagePanel extends JPanel{
 		g.drawImage(image, 100, 100, this);
 	}
 	
-	public void renderImage(){
+	// obtains image's pixels information, stores them without repetition 
+	// and writes their distribution in a .txt file
+	public void getPixelDist(){
 		
 		if(image == null)
 			return;
-		
-		try{
+				
+		int content;
 			
-			Graphics g = image.getGraphics();
-			g.setColor(Color.DARK_GRAY);
-			g.drawString("Kenasou.", 50 , 50);			
-			g.drawImage(ImageIO.read(new File("image.jpg")), 100, 100, null);
-			
-		}catch(IOException e){		
-			e.printStackTrace();
-		} 
+		for(int i = 0; i < image.getHeight(); i++){
+			for(int j = 0; j < image.getWidth(); j++){
+					
+				content = image.getRGB(j, i);										
+					
+				if(!tempArray.contains(content)){
+						
+					tempArray.add(content);
+					countArray.add((long) 1);
+						
+				}else{
+						
+					int index = tempArray.indexOf(content);
+					countArray.set(index, countArray.get(index)+1 );
+						
+				}						
+			}
+		}
 		
 	}
 	
-	public void getRGB(){
-		
-		if(image == null)
-			return;
-		
-		String FILENAME = "RGBs.txt";		
-		int content;
-		
-		
-		try{
-			
-			FileWriter fw = new FileWriter(FILENAME);
-			BufferedWriter bw = new BufferedWriter(fw);
-			
-			
-			for(int i = 0; i < image.getHeight(); i++){
-				for(int j = 0; j < image.getWidth(); j++){
-					
-					content = image.getRGB(j, i);										
-					
-					if(!tempArray.contains(content)){
-						
-						tempArray.add(content);
-						countArray.add((long) 1);
-						
-					}else{
-						
-						int index = tempArray.indexOf(content);
-						countArray.set(index, countArray.get(index)+1 );
-						
-					}
-					
-					bw.write(content);
-					bw.newLine();
-					bw.flush();					
-					
-				}
-			}
-			
-			bw.close();
-			
-			
-			String fn = "kena.txt";
-			FileWriter fw1 = new FileWriter(fn);
-			BufferedWriter bw1 = new BufferedWriter(fw1);
-		
-			
-			for(int i = 0; i < tempArray.size(); i++){
-				
-				bw1.write(tempArray.get(i) + " - " + countArray.get(i));				
-				bw1.newLine();
-				bw1.flush();
-			}
-			
-			bw1.close();
-			
-		}catch(IOException e){
-			e.printStackTrace();
-		}
-		
-		
+	public ArrayList<Integer> getPixels(){
+		return tempArray;		
+	}
+	
+	public ArrayList<Long> getPixelsCount(){
+		return countArray;
 	}
 }
