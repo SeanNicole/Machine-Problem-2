@@ -3,15 +3,16 @@ import java.awt.*;
 
 public class ImageCompressorApp{
 	
-	private static String filename = "image.jpg";
+	private static String filename = "image";
 	
 	public static void main(String[] args){
 		
-		ImageCompressor ic = new ImageCompressor(filename);
-		ic.setSize(480, 480);
-		ic.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		ic.setLocationRelativeTo(null);
-		ic.setVisible(true);
+		ImageCompressor frame = new ImageCompressor();		
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		//frame.setSize(300, 250);
+		//frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
 	}
 	
 }

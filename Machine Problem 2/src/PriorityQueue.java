@@ -2,9 +2,14 @@ public class PriorityQueue{
 	
 	public static Node first = null;	
 	public static Node last = null;
+	private int ctr = 0;
 	
 	public boolean isEmpty(){
 		return (first == null);
+	}
+	
+	public int size(){
+		return ctr;
 	}
 	
 	public void insert(Node node){								
@@ -43,6 +48,8 @@ public class PriorityQueue{
 			}
 
 		}
+		
+		ctr++;
 	}
 	
 	public Node remove(){				

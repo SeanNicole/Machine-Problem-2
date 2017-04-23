@@ -42,12 +42,12 @@ public class Tree{
 	            System.out.print("|\t");
 	        	
 	        	if(root.left == null && root.right == null)
-	        		System.out.println("|------[" + root.value + ":" + (int)root.frequency + "]");
+	        		System.out.println("|------[" + root.value + ":" + root.frequency + "]");
 	        	else
-	        		System.out.println("|------[" + (int)root.frequency + "]");
+	        		System.out.println("|------[" + root.frequency + "]");
 	    }
 	    else
-	        System.out.println("["+(int)root.frequency + "]");
+	        System.out.println("["+root.frequency + "]");
 	    
 	    printBinaryTree(root.left, level+1);
 	}
@@ -59,8 +59,14 @@ public class Tree{
 		Node current = currentNode;				
 
 		if(current.left != null || current.right != null){
+						
 			
 			if(current.left.value.equals(pixel)){
+				
+				if(pixel.equals("-3")){
+					System.out.println("current.left.value: " + current.left.value + " = pixel: " + pixel);
+				}
+				
 				code += "0";				
 				return code;
 			}
@@ -68,6 +74,7 @@ public class Tree{
 				code += "0";
 				current = current.left;				
 			}
+			
 			else if(current.right.value.equals(pixel)){
 				code += "1";
 				return code;

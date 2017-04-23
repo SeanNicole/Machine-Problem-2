@@ -7,9 +7,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-public class ImagePanel extends JPanel{
+public class ImagePanel extends JLabel{
 	
 	private BufferedImage image;
 	private ArrayList<Integer> tempArray = new ArrayList<Integer>();
@@ -24,11 +25,9 @@ public class ImagePanel extends JPanel{
 	}
 	
 	public void paint(Graphics g){
-		g.drawImage(image, 100, 100, this);
+		g.drawImage(image, 0, 0, this);
 	}
 	
-	// obtains image's pixels information, stores them without repetition 
-	// and writes their distribution in a .txt file
 	public void getPixelDist(){
 		
 		if(image == null)
