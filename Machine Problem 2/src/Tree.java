@@ -3,31 +3,24 @@ public class Tree{
 	private static Node node;
 	public static Node newRoot;
 	public static String code = "";
-
-	public Tree(){
-	}
 	
 	public Node makeTree(PriorityQueue queue)
 	{
 		
-		if(!queue.isEmpty())			
+		while(queue.size() > 1)			
 		{
 			Node nodeLeft = queue.remove();
 			Node nodeRight = queue.remove();
 			
-			if(nodeRight != null){	
 				
-				node = new Node(nodeLeft.value + nodeRight.value, nodeLeft.frequency + nodeRight.frequency);
-				node.left = nodeLeft;
-				node.right = nodeRight;
-				queue.insert(node);						
-				
-				makeTree(queue);	
-				
-			}else{
-				newRoot = nodeLeft;		// element in queue is now a root of the tree					
-			}
+			node = new Node(nodeLeft.value + nodeRight.value, nodeLeft.frequency + nodeRight.frequency);
+			node.left = nodeLeft;
+			node.right = nodeRight;
+			queue.insert(node);						
+						
 		}		
+		
+		newRoot = queue.remove();		
 		return newRoot;		
 	}
 	

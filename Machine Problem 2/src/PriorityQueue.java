@@ -54,6 +54,8 @@ public class PriorityQueue{
 	
 	public Node remove(){				
 		
+		ctr--;
+		
 		if(!isEmpty()){
 			
 			Node temp = first;

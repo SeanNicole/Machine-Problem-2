@@ -1,30 +1,37 @@
-import java.awt.BorderLayout;
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
-public class ImageCompressor extends JFrame{
-		
+public class ImageCompressor extends JFrame implements ActionListener{
+	private static final long serialVersionUID = 1L;
+
 	private JLabel chooseButton, trainButton, compButton, saveButton;	
 	
 	private ImageIcon openIcon = new ImageIcon(getClass().getResource("openButton.png"));
 	private ImageIcon openIcon2 = new ImageIcon(getClass().getResource("openButton1.png"));
 	private ImageIcon trainIcon = new ImageIcon(getClass().getResource("train.png"));
+	private ImageIcon compIcon = new ImageIcon(getClass().getResource("compIcon.png"));
+	
+	private JMenuBar menuBar;
+	private JMenu fileMenu, compressMenu;
+	private JMenuItem open, save, train, updateEH, createNH;	
 	
 	private ArrayList<Integer> tempArray = new ArrayList<Integer>();
 	private ArrayList<Long> countArray = new ArrayList<Long>();		
@@ -42,116 +49,47 @@ public class ImageCompressor extends JFrame{
 	
 		super("Image Huffman Compressor");
 		setLayout(null);		
+		
 		this.getContentPane().setBackground(Color.DARK_GRAY);		
-		setSize(650, 400);
-		setLocationRelativeTo(null);
-					
-		chooseButton = new JLabel(openIcon);
-		chooseButton.setBounds(170, 150, openIcon.getIconWidth(), openIcon.getIconHeight());		
+		setSize(1100, 700);
+		setLocationRelativeTo(null);		
 		
-		trainButton = new JLabel(trainIcon);		
-				
-		chooseButton.addMouseListener(new Handler());				
-		trainButton.addMouseListener(new Handler());
-							
-		add(chooseButton);
+		menuBar = new JMenuBar();
+		fileMenu = new JMenu("File");						
+		compressMenu = new JMenu("Compress image");
 		
+		menuBar.add(fileMenu);
+		menuBar.add(compressMenu);
 		
-	}
-	
-	public class Handler extends MouseAdapter{
-		public void mouseClicked(MouseEvent e){			
-			Object source = e.getSource();
-			
-			if(source == chooseButton){
-				getContentPane().removeAll();						
-				
-				JFileChooser fchooser = new JFileChooser();
-				fchooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-					
-				fchooser.showOpenDialog(null);
+		open = new JMenuItem("Open image file", KeyEvent.VK_T);
+		open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK));		
+		
+		save = new JMenuItem("Save compressed file");
+		save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
 								
-				File f = fchooser.getSelectedFile();
-				String file = "" + f;						
-					
-				if(f != null){
-					int i ;
-					for(i = file.length()-1; i >= 0; i--){
-						if(file.charAt(i) == '\\'){
-							break;
-						}
-					}
-						
-					filename = file.substring(i+1, file.length()-3);																						
-					
-					try{												
-						imagePanel = new ImagePanel(ImageIO.read(new File(file)));		
-						imagePanel.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
-						
-					}catch(IOException ee){
-						ee.printStackTrace();
-					}
-
-					setBounds(150, 45, 1100, 700);
-					
-					chooseButton.setIcon(openIcon2);
-					chooseButton.setBounds(700, 350, openIcon.getIconWidth(), openIcon.getIconHeight());
-					trainButton.setBounds(745, 400, trainIcon.getIconWidth(), trainIcon.getIconHeight());				
-								
-					scroll = new JScrollPane(imagePanel);				
-					scroll.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
-					scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-					scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-					
-					
-					if(imagePanel.getImage().getWidth() < 700 && imagePanel.getImage().getHeight() < 600){					
-						scroll.setBounds(50, 50, imagePanel.getImage().getWidth()+10, imagePanel.getImage().getHeight()+10);
-					
-					}else if(imagePanel.getImage().getWidth() >= 700  && imagePanel.getImage().getHeight() < 600){					
-						scroll.setBounds(50, 50, 700, imagePanel.getImage().getHeight()+10);
-						
-					}else if(imagePanel.getImage().getHeight() >= 600  && imagePanel.getImage().getWidth() < 700){					
-						scroll.setBounds(50, 50, imagePanel.getImage().getWidth()+10, 600);
-						
-					}else{
-						scroll.setBounds(50, 50, 700, 600);
-					}				
-					
-					getContentPane().add(scroll);
-					getContentPane().add(chooseButton);
-					getContentPane().add(trainButton);
-					
-					revalidate();
-					repaint();			
-
-				}
-			
-			}
-			
-			if(source == trainButton){
-				
-				getPixelDist();
-				insertToPriorityQueue();
-				makeHuffmanTree();
-				saveHuffmanTree();
-			}
-			
-			if(source == compButton){
-								
-				
-			}
-			
-			if(source == saveButton){
-				
-			}
-			
-		}
+		train = new JMenu("Train Huffman Tree");		
+		createNH = new JMenuItem("New Huffman tree");
+		updateEH = new JMenuItem("Existing Huffman tree");
 		
-	}
+		compressMenu.add(train);
+		train.add(createNH);
+		train.add(updateEH);
+		
+		fileMenu.add(open);		
+		fileMenu.add(save);			
+		
+		open.addActionListener(this);
+		save.addActionListener(this);
+		createNH.addActionListener(this);
+		updateEH.addActionListener(this);
+		
+		setJMenuBar(menuBar);
+		
+	}	
 	
 	private void getPixelDist(){
 		
-		imagePanel.getPixelDist();	// gets each pixel information and stores them in a text file
+		imagePanel.getPixelDist();	
 		tempArray = imagePanel.getPixels();
 		countArray = imagePanel.getPixelsCount();
 	}
@@ -173,55 +111,43 @@ public class ImageCompressor extends JFrame{
 
 	private void saveHuffmanTree(){
 		
+		System.out.println("Inside saveHuffmanTree\nfilename: " + filename);
+		
 		ArrayList<Node> temp = new ArrayList<Node>();
 		temp.add(null);		
 		
 		String FILENAME = filename + ".huff";
-		//String node;
-		
-		Node current = root;
-		Node previous;
-		
-		boolean left = false, right = true;
-		
-		for(int i = 1; i < temp.size()-1; i++){				
-								
-			if(current != null){
-			
-				temp.add(current);		
-				temp.add(current.left);
-				temp.add(current.right);			
-				
-			}
-			
-			current = temp.get(i+1);
-		}
-
+		String RGBcontent = "";
+		String hCode = "";
 		
 		try{
 			
 			FileWriter fw = new FileWriter(new File(FILENAME));
-			BufferedWriter bw = new BufferedWriter(fw);							
+			BufferedWriter bw = new BufferedWriter(fw);
 			
-			bw.write();
-			bw.newLine();
-			bw.flush();
-							
-			
-			
+			for(int i = 0; i < tempArray.size(); i++){
+				
+				RGBcontent = "" + tempArray.get(i);
+				hCode = tree.huffmanCode(root, "" + tempArray.get(i));
+				
+				bw.write(RGBcontent + "|" + hCode);				
+				bw.flush();								
+				
+				Tree.code = "";				
+			}
 			bw.close();
 			
 		}catch(IOException e){
 			e.printStackTrace();
 		}
 		
+		System.out.println("End save...");		
 	}
 	
 	private void getHuffmanCodes(){
+				
 		
-		System.out.println("filename: " + filename);
-		
-		String FILENAME = filename + ".huff";
+		String FILENAME = filename + ".szl";
 		String content;
 		
 		try{
@@ -233,8 +159,7 @@ public class ImageCompressor extends JFrame{
 				
 				content = tree.huffmanCode(root, " " + tempArray.get(i) + " ");
 				
-				bw.write(tempArray.get(i) + " = " + countArray.get(i) + " = " + content);
-				bw.newLine();
+				bw.write(content);				
 				bw.flush();
 				
 				Tree.code = "";
@@ -247,11 +172,125 @@ public class ImageCompressor extends JFrame{
 		}
 		
 		
+	}		
+	
+	private void readHuffFile(String FILENAME){
+		
+		BufferedReader br = null;
+		FileReader fr = null;
+		
+		
+		try{
+			
+			fr = new FileReader(FILENAME);
+			br = new BufferedReader(fr);									
+			
+			String sCurrentLine = br.readLine();
+			System.out.println(sCurrentLine);			
+		
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		
 	}
+	
+	public void actionPerformed(ActionEvent e){		
+		Object source = e.getSource();
 		
-	public void renderImage(String filename){	
+		if(source == open){
+					
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("jpg", "png", "szl");
+			JFileChooser fchooser = new JFileChooser();
+			fchooser.setFileFilter(filter);
+			
+			fchooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);				
+			fchooser.showOpenDialog(null);
+							
+			File f = fchooser.getSelectedFile();
+			String file = "" + f;															
+			
+			if(f != null){				
+				
+				int i ;
+				for(i = file.length()-1; i >= 0; i--){
+					if(file.charAt(i) == '\\'){
+						break;
+					}
+				}
+					
+
+				filename = file.substring(i+1, file.length()-4);																						
+				
+				try{												
+					imagePanel = new ImagePanel(ImageIO.read(new File(file)));		
+					imagePanel.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
+					
+				}catch(IOException ee){
+					ee.printStackTrace();
+				}
+											
+				scroll = new JScrollPane(imagePanel);				
+				scroll.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
+				scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+				scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+				
+				
+				if(imagePanel.getImage().getWidth() < 700 && imagePanel.getImage().getHeight() < 600){					
+					scroll.setBounds(50, 50, imagePanel.getImage().getWidth()+10, imagePanel.getImage().getHeight()+10);
+				
+				}else if(imagePanel.getImage().getWidth() >= 700  && imagePanel.getImage().getHeight() < 600){					
+					scroll.setBounds(50, 50, 700, imagePanel.getImage().getHeight()+10);
+					
+				}else if(imagePanel.getImage().getHeight() >= 600  && imagePanel.getImage().getWidth() < 700){					
+					scroll.setBounds(50, 50, imagePanel.getImage().getWidth()+10, 600);
+					
+				}else{
+					scroll.setBounds(50, 50, 700, 600);
+				}				
+				
+				getContentPane().add(scroll);
+				revalidate();
+				repaint();
+			}
+		}
 		
+		if(source == updateEH){
+						
+			JFileChooser fchooser = new JFileChooser();
+			fchooser.setAcceptAllFileFilterUsed(false);			
+			
+			int returnVal = fchooser.showOpenDialog(null);
+			
+			if(returnVal == JFileChooser.APPROVE_OPTION){
+				File file = fchooser.getSelectedFile();
+				
+				if(file.getName().endsWith(".huff")){
+					
+					String FILENAME = "" + file;															
+					readHuffFile(FILENAME);
+				}else{
+					JOptionPane.showMessageDialog(null, "Invalid file");
+				}
+				
+			}
+										
+			
+		}
+		
+		if(source == createNH){
+			
+			getPixelDist();
+			insertToPriorityQueue();
+			makeHuffmanTree();
+			saveHuffmanTree();			
+			
+		}
+		
+		if(source == save){
+			getHuffmanCodes();
+		}
 		
 		
 	}
+
 }
