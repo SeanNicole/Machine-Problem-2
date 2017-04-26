@@ -56,10 +56,6 @@ public class Tree{
 			
 			if(current.left.value.equals(pixel)){
 				
-				if(pixel.equals("-3")){
-					System.out.println("current.left.value: " + current.left.value + " = pixel: " + pixel);
-				}
-				
 				code += "0";				
 				return code;
 			}
@@ -91,6 +87,38 @@ public class Tree{
 			return true;
 		
 		return false;		 
+	}
+	
+	public String traverse(String bits){
+		Node current = newRoot;				
+		/*
+		if(current.left != null || current.right != null){
+						
+			
+			if(!current.left.value.equals("0") && !current.left.value.equals("1")){
+				
+				code += "0";				
+				return code;
+			}
+			else if(nodeValContains(current.left.value, pixel)){
+				code += "0";
+				current = current.left;				
+			}
+			
+			else if(current.right.value.equals(pixel)){
+				code += "1";
+				return code;
+			}
+			else if(nodeValContains(current.right.value, pixel)){
+				code += "1";
+				current = current.right;
+			}else{				
+				return null;
+			}
+						
+			huffmanCode(current, pixel);
+		}
+		*/
 	}
 	
 } 
