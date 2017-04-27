@@ -90,35 +90,31 @@ public class Tree{
 	}
 	
 	public String traverse(String bits){
-		Node current = newRoot;				
-		/*
-		if(current.left != null || current.right != null){
-						
+		
+		Node current = newRoot;						
+		char[] character = bits.toCharArray();
+		
+		System.out.println("bits.length: " + bits.length());
+		for(int i = 0; i < bits.length(); i++){
 			
-			if(!current.left.value.equals("0") && !current.left.value.equals("1")){
+			System.out.println("i: " + i);
+			
+			if(character[i] == '0'){				
+				//traverse left
+				current = current.left;
 				
-				code += "0";				
-				return code;
 			}
-			else if(nodeValContains(current.left.value, pixel)){
-				code += "0";
-				current = current.left;				
-			}
+			else if(character[i] == '1'){				
+				//traverse right
+				current = current.right;				
+			}		
 			
-			else if(current.right.value.equals(pixel)){
-				code += "1";
-				return code;
-			}
-			else if(nodeValContains(current.right.value, pixel)){
-				code += "1";
-				current = current.right;
-			}else{				
-				return null;
-			}
-						
-			huffmanCode(current, pixel);
-		}
-		*/
+		}	
+		
+		if(current.right == null || current.left == null)		
+			return current.value;				
+		
+		return null;
 	}
 	
 } 

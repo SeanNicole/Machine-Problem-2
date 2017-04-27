@@ -7,6 +7,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -36,8 +37,8 @@ public class ImageCompressor extends JFrame implements ActionListener{
 	private ArrayList<Integer> tempArray = new ArrayList<Integer>();
 	private ArrayList<Long> countArray = new ArrayList<Long>();		
 			
-	private ImagePanel imagePanel;
-	private JScrollPane scroll;
+	private static ImagePanel imagePanel;
+	private static JScrollPane scroll;
 	
 	private Node root = null;	
 	private PriorityQueue queue = new PriorityQueue();
@@ -117,8 +118,7 @@ public class ImageCompressor extends JFrame implements ActionListener{
 		temp.add(null);		
 		
 		String FILENAME = filename + ".huff";
-		String RGBcontent = "";
-		String hCode = "";
+		String RGBcontent = "", RGBfreq = "";
 		
 		try{
 			
@@ -128,9 +128,10 @@ public class ImageCompressor extends JFrame implements ActionListener{
 			for(int i = 0; i < tempArray.size(); i++){
 				
 				RGBcontent = "" + tempArray.get(i);
-				hCode = tree.huffmanCode(root, "" + tempArray.get(i));
+				RGBfreq = "" + countArray.get(i);
+				//hCode = tree.huffmanCode(root, "" + tempArray.get(i));
 				
-				bw.write(RGBcontent + "|" + hCode);				
+				bw.write(RGBfreq + RGBcontent + "|");				
 				bw.flush();								
 				
 				Tree.code = "";				
@@ -148,23 +149,58 @@ public class ImageCompressor extends JFrame implements ActionListener{
 				
 		
 		String FILENAME = filename + ".szl";
-		String content;
+		String content = "";
 		
 		try{
 			
 			FileWriter fw = new FileWriter(new File(FILENAME));
 			BufferedWriter bw = new BufferedWriter(fw);							
 			
-			for(int i = 0; i < tempArray.size(); i++){
+			System.out.println("-----||width: " + imagePanel.getImage().getWidth());
+			System.out.println("-----||height: " + imagePanel.getImage().getHeight());
+			
+			
+			for(int x = 0; x < imagePanel.getImage().getWidth(); x++){				
+				for(int y = 0; y < imagePanel.getImage().getHeight(); y++){
+					
+					//get huffman code string
+					content += tree.huffmanCode(root, " " + imagePanel.getImage().getRGB(x, y) + " ");
+					Tree.code = "";
+					
+				}
+			}
+			/*
+			int mod = content.length()%7;
+			if(mod != 0){
+				String x = content.substring(content.length()-mod, content.length());
+
+				for(int i = 0; i < 7-mod; i++){
+					x = "0" + x;
+				}							
+								
+				content = content.substring(0, content.length()-mod) + x;
+			}			
+			
+			int cLength = content.length()/7;
+			char[] charArray = new char[cLength];
+			
+			int beginIndex = 0;
+			int endIndex = 7;
+
+			//chunk by 7
+			for(int i = 0; i < cLength; i++){
 				
-				content = tree.huffmanCode(root, " " + tempArray.get(i) + " ");
+				charArray[i] = (char) Integer.parseInt(content.substring(beginIndex, endIndex), 2);
 				
-				bw.write(content);				
+				bw.write(charArray[i]);				
 				bw.flush();
 				
-				Tree.code = "";
-			}
-			
+				beginIndex = endIndex;
+				endIndex += 7; 				
+			}*/						
+
+			bw.write(content);				
+			bw.flush();
 			bw.close();
 			
 		}catch(IOException e){
@@ -174,23 +210,228 @@ public class ImageCompressor extends JFrame implements ActionListener{
 		
 	}		
 	
-	private void readHuffFile(String FILENAME){
+	private String[] readHuffFile(String FILENAME){
+		
+		System.out.println("Reading HUFF file...");
 		
 		BufferedReader br = null;
 		FileReader fr = null;
-		
+		String[] token = null;
 		
 		try{
 			
 			fr = new FileReader(FILENAME);
 			br = new BufferedReader(fr);									
 			
-			String sCurrentLine = br.readLine();
-			System.out.println(sCurrentLine);			
-		
+			String huffContent = br.readLine();
+			System.out.println(huffContent);		
+			
+			token = huffContent.split("[|]"); 														
+			
 		}catch(IOException e){
 			e.printStackTrace();
 		}
+				
+		return token;
+	}
+	
+	private void updateHuffmanTree(String[] token){
+		
+		System.out.println("Updating Huffman Tree");
+		
+		ArrayList<Integer> tempArray_Huff = new ArrayList<Integer>();
+		ArrayList<Long> countArray_Huff = new ArrayList<Long>();
+		
+		for(int i = 0; i < token.length; i++){
+			
+			for(int j = 0; j < token[i].length(); j++){
+								
+				if(token[i].charAt(j) == '-'){										
+					
+					tempArray_Huff.add(Integer.parseInt(token[i].substring(j, token[i].length())));
+					countArray_Huff.add(Long.parseLong(token[i].substring(0, j)));
+					
+				}				
+			}
+			
+		}
+		
+		System.out.println("Getting pixel distribution...");
+		getPixelDist();		
+		
+		
+		System.out.println("Updating ArrayList...");
+		for(int i = 0; i < tempArray_Huff.size(); i++){
+						
+			if(tempArray.contains(tempArray_Huff.get(i))){
+
+				int index = tempArray.indexOf(tempArray_Huff.get(i));
+				
+				tempArray.set(index, tempArray_Huff.get(i));
+				countArray.set(index, countArray_Huff.get(i));
+				
+			}else{			
+				
+				tempArray.add(tempArray_Huff.get(i));
+				countArray.add(countArray_Huff.get(i));
+				
+			}
+			
+		}
+		
+		System.out.println("Inserting elements to PriorityQueue...");
+		insertToPriorityQueue();		
+		System.out.println("Creating Huffman tree...");
+		makeHuffmanTree();
+		System.out.println("Saving Huffman tree...");
+		saveHuffmanTree();
+		System.out.println("Huffman tree saved!");
+		
+	}
+	
+	private void renderImage(String FILENAME){
+								
+		
+		int i ;
+		for(i = FILENAME.length()-1; i >= 0; i--){
+			if(FILENAME.charAt(i) == '\\'){
+				break;
+			}
+		}
+			
+		filename = FILENAME.substring(i+1, FILENAME.length()-4);																						
+		
+		if(FILENAME.endsWith(".szl")){
+			
+			String content = "";
+			String temp = "";
+			int ascii;
+			
+			try{
+				//get codes			
+				FileReader fr = new FileReader(new File(FILENAME));
+				BufferedReader br = new BufferedReader(fr);
+					
+				temp = br.readLine();
+				//char[] array = br.readLine().toCharArray();								
+				br.close();
+				/*
+				for(int j = 0; j < array.length; j++){
+					
+					ascii = (int) array[j];
+					content += Integer.toBinaryString(ascii);					
+				}*/								
+				
+			}catch(IOException e){
+				e.printStackTrace();
+			}
+			
+			System.out.println("temp: " + temp);
+			
+			//read huffman file
+			String[] token = readHuffFile(FILENAME.substring(0, FILENAME.length()-4) + ".huff");					
+			
+			tempArray.removeAll(tempArray);
+			countArray.removeAll(countArray);
+			
+			for(int i1 = 0; i1 < token.length; i1++){
+				
+				for(int j = 0; j < token[i1].length(); j++){
+									
+					if(token[i1].charAt(j) == '-'){										
+						
+						tempArray.add(Integer.parseInt(token[i1].substring(j, token[i1].length())));
+						countArray.add(Long.parseLong(token[i1].substring(0, j)));
+						
+					}				
+				}
+				
+			}
+
+			//create huffman tree
+			System.out.println("Inserting elements to queue...");
+			insertToPriorityQueue();		
+			System.out.println("Creating Huffman tree...");
+			makeHuffmanTree();									
+
+			ArrayList<Integer> compressedPixels = new ArrayList<Integer>();
+			
+			//traverse through tree until pixel found
+			int index = 0;
+			int ctr = 1;
+			String bits;
+			System.out.println("temp.length: " + temp.length());
+			while(index < temp.length()){
+				
+				bits = temp.substring(index, index + ctr);
+				String returnVal = tree.traverse(bits);
+				
+				if(returnVal != null){
+					
+					System.out.println("returnVal: " + returnVal);
+					returnVal = returnVal.trim();
+					compressedPixels.add(Integer.parseInt(returnVal));
+					
+					index = index + ctr;
+					ctr = 0;
+				}
+				
+				ctr++;								
+			}
+			
+			//draw the image
+			int w = 217, h = 35;			
+			int type = BufferedImage.TYPE_INT_RGB;
+			
+			BufferedImage image = new BufferedImage(w, h, type);
+			System.out.println("Arraylist size: " + compressedPixels.size());
+			
+			int ind = 0;
+			for(int x = 0; x < w; x++){
+				for(int y = 0; y < h; y++){
+										
+					image.setRGB(x, y, compressedPixels.get(ind));
+					ind++;
+				}
+			}
+			
+			imagePanel = new ImagePanel(image);		
+			imagePanel.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
+			
+		}else{
+			
+			try{												
+				imagePanel = new ImagePanel(ImageIO.read(new File(FILENAME)));		
+				imagePanel.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
+				
+			}catch(IOException ee){
+				ee.printStackTrace();
+			}
+			
+		}		
+									
+		scroll = new JScrollPane(imagePanel);				
+		scroll.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
+		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		
+		
+		if(imagePanel.getImage().getWidth() < 700 && imagePanel.getImage().getHeight() < 600){					
+			scroll.setBounds(50, 50, imagePanel.getImage().getWidth()+10, imagePanel.getImage().getHeight()+10);
+		
+		}else if(imagePanel.getImage().getWidth() >= 700  && imagePanel.getImage().getHeight() < 600){					
+			scroll.setBounds(50, 50, 700, imagePanel.getImage().getHeight()+10);
+			
+		}else if(imagePanel.getImage().getHeight() >= 600  && imagePanel.getImage().getWidth() < 700){					
+			scroll.setBounds(50, 50, imagePanel.getImage().getWidth()+10, 600);
+			
+		}else{
+			scroll.setBounds(50, 50, 700, 600);
+		}				
+		
+		getContentPane().add(scroll);
+		revalidate();
+		repaint();
 		
 	}
 	
@@ -198,60 +439,28 @@ public class ImageCompressor extends JFrame implements ActionListener{
 		Object source = e.getSource();
 		
 		if(source == open){
-					
-			FileNameExtensionFilter filter = new FileNameExtensionFilter("jpg", "png", "szl");
-			JFileChooser fchooser = new JFileChooser();
-			fchooser.setFileFilter(filter);
-			
-			fchooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);				
-			fchooser.showOpenDialog(null);
-							
-			File f = fchooser.getSelectedFile();
-			String file = "" + f;															
-			
-			if(f != null){				
-				
-				int i ;
-				for(i = file.length()-1; i >= 0; i--){
-					if(file.charAt(i) == '\\'){
-						break;
-					}
-				}
-					
-
-				filename = file.substring(i+1, file.length()-4);																						
-				
-				try{												
-					imagePanel = new ImagePanel(ImageIO.read(new File(file)));		
-					imagePanel.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
-					
-				}catch(IOException ee){
-					ee.printStackTrace();
-				}
 											
-				scroll = new JScrollPane(imagePanel);				
-				scroll.setPreferredSize(new Dimension(imagePanel.getImage().getWidth(), imagePanel.getImage().getHeight()));
-				scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-				scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+			JFileChooser fchooser = new JFileChooser();
+			
+			fchooser.setAcceptAllFileFilterUsed(false);			
+			
+			int returnVal = fchooser.showOpenDialog(null);
+			
+			if(returnVal == JFileChooser.APPROVE_OPTION){
+				File file = fchooser.getSelectedFile();
 				
-				
-				if(imagePanel.getImage().getWidth() < 700 && imagePanel.getImage().getHeight() < 600){					
-					scroll.setBounds(50, 50, imagePanel.getImage().getWidth()+10, imagePanel.getImage().getHeight()+10);
-				
-				}else if(imagePanel.getImage().getWidth() >= 700  && imagePanel.getImage().getHeight() < 600){					
-					scroll.setBounds(50, 50, 700, imagePanel.getImage().getHeight()+10);
+				if(file.getName().endsWith(".png") || file.getName().endsWith(".szl") ){
 					
-				}else if(imagePanel.getImage().getHeight() >= 600  && imagePanel.getImage().getWidth() < 700){					
-					scroll.setBounds(50, 50, imagePanel.getImage().getWidth()+10, 600);
+					String FILENAME = "" + file;
+					getContentPane().removeAll();
+					renderImage(FILENAME);
+					//getContentPane().add(comp)
 					
 				}else{
-					scroll.setBounds(50, 50, 700, 600);
-				}				
+					JOptionPane.showMessageDialog(null, "Invalid file");
+				}
 				
-				getContentPane().add(scroll);
-				revalidate();
-				repaint();
-			}
+			}			
 		}
 		
 		if(source == updateEH){
@@ -267,7 +476,9 @@ public class ImageCompressor extends JFrame implements ActionListener{
 				if(file.getName().endsWith(".huff")){
 					
 					String FILENAME = "" + file;															
-					readHuffFile(FILENAME);
+					String[] token = readHuffFile(FILENAME);
+					updateHuffmanTree(token);
+					
 				}else{
 					JOptionPane.showMessageDialog(null, "Invalid file");
 				}
@@ -288,6 +499,7 @@ public class ImageCompressor extends JFrame implements ActionListener{
 		
 		if(source == save){
 			getHuffmanCodes();
+			System.out.println(".SZL created!");
 		}
 		
 		
